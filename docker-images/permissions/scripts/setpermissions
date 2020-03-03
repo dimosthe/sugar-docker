@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+DIR=/var/www/html/sugarcrm
+
+# Set ownership to sugar:sugar
+chown -R sugar:sugar ${DIR}
+
+# Set 660 to files and 770 to directories
+find ${DIR} -type d -exec chmod 2770 {} \;
+find ${DIR} -type f -exec chmod 660 {} \;
+
+# Set 770 to sugarcrm
+chmod 770 ${DIR}/bin/sugarcrm

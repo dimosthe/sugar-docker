@@ -1,0 +1,97 @@
+version: '3.7'
+
+services:
+  app:
+    container_name: sugar-app
+    build: 
+      context: docker-images/app
+    image: sugar-apache-php
+    ports: 
+      - "8080:80"
+      - "8081:443"
+    environment:
+      - "APACHE_RUN_USER=sugar"
+      - "APACHE_RUN_GROUP=sugar"
+    volumes: 
+      - "./data/sugar:/var/www/html"
+    depends_on:
+      - db
+      - search
+      - permissions
+    networks:
+      - db-net
+      - elastic-net
+  scheduler:
+    container_name: sugar-scheduler
+    build:
+      context: docker-images/scheduler
+    image: sugar-php
+    volumes: 
+      - "./data/sugar:/var/www/html"
+    depends_on:
+      - db
+      - search
+      - permissions
+    networks:
+      - db-net
+      - elastic-net
+  db:
+    container_name: sugar-db
+    build:
+      context: docker-images/db
+    image: sugar-mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./data/mysql:/var/lib/mysql"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - db-net
+  search:
+    container_name: sugar-search
+    build:
+      context: docker-images/search
+    image: sugar-elastic
+    ports:
+      - 9200:9200
+    volumes:
+      - "./data/elasticsearch:/usr/share/elasticsearch/data"
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic-net
+  dbmigration:
+    container_name: sugar-dbmigration
+    build:
+      context: docker-images/dbmigration
+    image: sugar-flyway
+    command: migrate
+    volumes:
+      - "./data/sugar/sugarcrm/sql:/flyway/sql"
+    networks:
+      - db-net
+    depends_on:
+      - db
+  permissions:
+    container_name: sugar-permissions
+    build:
+      context: docker-images/permissions
+    image: sugar-debian
+    volumes:
+      - "./data/sugar:/var/www/html"
+networks:
+  db-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+  elastic-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
