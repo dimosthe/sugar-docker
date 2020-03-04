@@ -7,8 +7,8 @@ services:
       context: docker-images/app
     image: sugar-apache-php
     ports: 
-      - "8080:80"
-      - "8081:443"
+      - "80:80"
+      - "443:443"
     environment:
       - "APACHE_RUN_USER=sugar"
       - "APACHE_RUN_GROUP=sugar"
